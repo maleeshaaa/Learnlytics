@@ -1,6 +1,11 @@
+using Learnlytics.API.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
+builder.Services.AddSingleton<UserService>();
 
 builder.Services.AddControllers();
 
@@ -36,6 +41,7 @@ app.UseHttpsRedirection();
 // Enable CORS middleware here
 app.UseCors(MyAllowSpecificOrigins);
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
