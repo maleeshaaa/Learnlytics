@@ -1,0 +1,42 @@
+# Visual Studio / .NET Core ignore patterns
+
+# VS Code settings and extension recommendations (including Copilot)
+.vscode/
+.vs/
+
+## Ignore build outputs
+bin/
+obj/
+
+## User-specific files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Logs
+*.log
+
+## NuGet Packages
+*.nupkg
+packages/
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+## OS generated files
+.DS_Store
+Thumbs.db
+
+## Rider IDE files
+.idea/
+
+## Azure Functions build artifacts
+.azurefunctions/
+
+# dotenv environment variables
+.env
+
+# Others
+appsettings.*.json

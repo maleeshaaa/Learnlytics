@@ -1,0 +1,6 @@
+@Learnlytics.API_HostAddress = http://localhost:5151
+
+GET {{Learnlytics.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
