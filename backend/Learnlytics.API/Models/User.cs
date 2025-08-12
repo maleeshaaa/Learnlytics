@@ -3,6 +3,13 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Learnlytics.API.Models
 {
+    public enum UserRole
+    {
+        Admin,
+        Instructor,
+        Learner
+    }
+
     public class User
     {
         [BsonId]
@@ -17,5 +24,9 @@ namespace Learnlytics.API.Models
 
         [BsonElement("passwordHash")]
         public string PasswordHash { get; set; } = null!;
+
+        [BsonElement("role")]
+        [BsonRepresentation(BsonType.String)]
+        public UserRole Role { get; set; } = UserRole.Learner;
     }
 }

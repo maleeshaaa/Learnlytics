@@ -1,5 +1,6 @@
 ﻿using Learnlytics.API.Models;
 using Learnlytics.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -35,7 +36,8 @@ namespace Learnlytics.API.Controllers
             {
                 Username = model.Username,
                 Email = model.Email,
-                PasswordHash = passwordHash
+                PasswordHash = passwordHash,
+                Role = UserRole.Learner
             };
 
             await _userService.CreateAsync(user);
@@ -69,6 +71,7 @@ namespace Learnlytics.API.Controllers
             var authClaims = new List<Claim>
     {
         new Claim(ClaimTypes.Name, user.Username),
+        new Claim(ClaimTypes.Role, user.Role.ToString()),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
     };
 
