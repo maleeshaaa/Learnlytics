@@ -1,6 +1,7 @@
 ﻿using Learnlytics.API.Models;
 using Learnlytics.API.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -41,6 +42,8 @@ namespace Learnlytics.API.Controllers
 
             var user = new User
             {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
                 Username = model.Username,
                 Email = model.Email,
                 PasswordHash = passwordHash,

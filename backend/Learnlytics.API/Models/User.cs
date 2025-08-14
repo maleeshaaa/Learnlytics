@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace Learnlytics.API.Models
 {
@@ -14,6 +15,12 @@ namespace Learnlytics.API.Models
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
+
+        [BsonElement("firstname")]
+        public string FirstName { get; set; } = null!;
+
+        [BsonElement("lastname")]
+        public string LastName { get; set; } = null!;
 
         [BsonElement("username")]
         public string Username { get; set; } = null!;
