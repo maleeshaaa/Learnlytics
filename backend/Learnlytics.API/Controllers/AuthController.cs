@@ -47,7 +47,7 @@ namespace Learnlytics.API.Controllers
                 Username = model.Username,
                 Email = model.Email,
                 PasswordHash = passwordHash,
-                Role = UserRole.Learner
+                Role = model.Role
             };
 
             await _userService.CreateAsync(user);
