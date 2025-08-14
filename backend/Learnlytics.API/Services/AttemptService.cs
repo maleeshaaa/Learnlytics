@@ -32,7 +32,7 @@ namespace Learnlytics.API.Services
         {
             var assessment = await _assessment.Find(a => a.Id == assessmentId && a.Published).FirstOrDefaultAsync() 
                 ?? throw new ArgumentException("Assessment not found or not published", nameof(assessmentId));
-            
+
             var now = DateTime.UtcNow;
             var attempt = new Attempt
             {

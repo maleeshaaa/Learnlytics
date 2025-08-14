@@ -14,10 +14,7 @@ namespace Learnlytics.API.Models
     {
         [BsonId, BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
-
-        [BsonRepresentation(BsonType.ObjectId)]
         public string? AssessmentId { get; set; } = null!;
-
         public string Username { get; set; } = null!;
         public DateTime StartedAt { get; set; } = DateTime.UtcNow;
         public DateTime? ExpiredAt { get; set; }

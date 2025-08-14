@@ -1,5 +1,6 @@
 ﻿using Learnlytics.API.Models;
 using Learnlytics.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Learnlytics.API.Controllers
@@ -15,6 +16,7 @@ namespace Learnlytics.API.Controllers
             _service = service;
         }
 
+        [Authorize(Roles = "Learner")]
         [HttpPost("start")]
         public async Task<IActionResult> Start([FromBody] StartAttemptDto startAttemptDto)
         {
