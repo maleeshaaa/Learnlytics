@@ -14,7 +14,7 @@ namespace Learnlytics.API.Models
         [BsonId, BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
 
-        public string Title { get; set; } = null;
+        public string Title { get; set; } = null!;
         public string Description { get; set; } = null!;
         public List<string> Skills { get; set; } = new();
         public int DurationMinutes { get; set; } = 30;

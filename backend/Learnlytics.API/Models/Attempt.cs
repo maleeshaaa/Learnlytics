@@ -52,7 +52,7 @@ namespace Learnlytics.API.Models
 
     public class CodingAnswer : Answers
     {
-        public string Code { get; set; }
+        public string Code { get; set; } = string.Empty;
         public double? PlagiarismScore { get; set; }
         public bool IsCorrect { get; set; } = false;
         public List<string> SimilarAttemptIds { get; set; } = new();
