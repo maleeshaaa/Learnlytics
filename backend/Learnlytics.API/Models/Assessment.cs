@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using System.Text.Json.Serialization;
 
 namespace Learnlytics.API.Models
 {
@@ -27,6 +28,9 @@ namespace Learnlytics.API.Models
 
     [BsonDiscriminator(RootClass = true)]
     [BsonKnownTypes(typeof(McqQuestion), typeof(CodingQuestion))]
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+    [JsonDerivedType(typeof(McqQuestion), "mcq")]
+    [JsonDerivedType(typeof(CodingQuestion), "coding")]
     public abstract class QuestionBase
     {
         [BsonRepresentation(BsonType.ObjectId)]
@@ -42,6 +46,7 @@ namespace Learnlytics.API.Models
         public List<string> Options { get; set; } = new();
         public List<int> CorrectAnswers { get; set; } = new();
         public bool ShuffleOptions { get; set; } = true;
+
         public McqQuestion()
         {
             QuestionType = QuestionType.MCQ;
@@ -55,6 +60,7 @@ namespace Learnlytics.API.Models
         public List<string> TestCases { get; set; } = new();
         public string? ExpectedOutput { get; set; }
         public string PlagiarismGroupKey { get; set; } = "";
+
         public CodingQuestion()
         {
             QuestionType = QuestionType.Coding;

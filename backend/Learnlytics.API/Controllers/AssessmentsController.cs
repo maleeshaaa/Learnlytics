@@ -1,7 +1,6 @@
 ﻿using Learnlytics.API.Services;
 using Learnlytics.API.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Learnlytics.API.Controllers
 {
@@ -17,7 +16,6 @@ namespace Learnlytics.API.Controllers
         }
 
         [HttpGet("published")]
-        [Authorize(Roles = "Instructor,Learner")]
         public async Task<IActionResult> GetPublishedAssessments()
         {
             var assessments = await _service.GetPublishedAsync();
@@ -25,7 +23,6 @@ namespace Learnlytics.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Instructor")]
         public async Task<IActionResult> Create([FromBody] CreateAssessmentDto createAssessmentDto)
         {
             var a = new Assessment()
@@ -43,7 +40,6 @@ namespace Learnlytics.API.Controllers
         }
 
         [HttpPost("{id}/publish")]
-        [Authorize(Roles = "Instructor")]
         public async Task<IActionResult> Publish(string id, [FromQuery] bool published = true)
         {
             await _service.PublishAsync(id, published);
@@ -51,7 +47,6 @@ namespace Learnlytics.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Learner,Instructor")]
         public async Task<IActionResult> Get(string id)
         {
             var a = await _service.GetByIdAsync(id);
@@ -60,7 +55,6 @@ namespace Learnlytics.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Instructor")]
         public async Task<IActionResult> UpdateAssessment(string id, [FromBody] Assessment updatedAssessment)
         {
             if (id != updatedAssessment.Id)
@@ -76,7 +70,6 @@ namespace Learnlytics.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Instructor")]
         public async Task<IActionResult> DeleteAssessment(string id)
         {
             var existing = await _service.GetByIdAsync(id);
@@ -88,7 +81,6 @@ namespace Learnlytics.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Instructor,Learner")]
         public async Task<ActionResult<List<Assessment>>> GetAllAssessments()
         {
             var assessments = await _service.GetAllAsync();

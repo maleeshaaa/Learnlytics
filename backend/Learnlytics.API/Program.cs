@@ -1,4 +1,7 @@
+using Learnlytics.API.Models;
 using Learnlytics.API.Services;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
 builder.Services.AddSingleton<UserService>();
+builder.Services.AddSingleton<AssessmentService>();
+builder.Services.AddSingleton<AttemptService>();
 
 builder.Services.AddControllers();
 
@@ -26,6 +31,31 @@ builder.Services.AddCors(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, new DefaultJsonTypeInfoResolver
+    {
+        Modifiers = { PolymorphicTypeInfoModifier }
+    });
+});
+
+static void PolymorphicTypeInfoModifier(JsonTypeInfo typeInfo)
+{
+    if (typeInfo.Type == typeof(QuestionBase))
+    {
+        typeInfo.PolymorphismOptions = new JsonPolymorphismOptions
+        {
+            TypeDiscriminatorPropertyName = "$type",
+            IgnoreUnrecognizedTypeDiscriminators = false
+        };
+
+        typeInfo.PolymorphismOptions.DerivedTypes.Add(new JsonDerivedType(typeof(McqQuestion), "mcq"));
+        typeInfo.PolymorphismOptions.DerivedTypes.Add(new JsonDerivedType(typeof(CodingQuestion), "coding"));
+    }
+}
 
 var app = builder.Build();
 

@@ -28,7 +28,7 @@
     public class CreateAssessmentDto
     {
         public string Title { get; set; } = null!;
-        public string Description { get; set; } = "";
+        public string Description { get; set; } = null!;
         public List<string> Skills { get; set; } = new();
         public int DurationMinutes { get; set; } = 30;
         public List<QuestionBase> Questions { get; set; } = new();
