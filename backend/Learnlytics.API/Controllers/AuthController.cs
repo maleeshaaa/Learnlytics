@@ -23,6 +23,13 @@ namespace Learnlytics.API.Controllers
             _configuration = configuration;
         }
 
+        private string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(bytes);
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
@@ -43,13 +50,6 @@ namespace Learnlytics.API.Controllers
             await _userService.CreateAsync(user);
 
             return Ok("User registered successfully");
-        }
-
-        private string HashPassword(string password)
-        {
-            using var sha256 = SHA256.Create();
-            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(bytes);
         }
 
         [HttpPost("login")]
