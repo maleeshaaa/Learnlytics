@@ -5,7 +5,6 @@ namespace Learnlytics.API.Models
 {
     public enum UserRole
     {
-        Admin,
         Instructor,
         Learner
     }
