@@ -25,8 +25,11 @@ namespace Learnlytics.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateAssessmentDto createAssessmentDto)
         {
+            var randomId = Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
+
             var a = new Assessment()
             {
+                AssessmentId = randomId,
                 Title = createAssessmentDto.Title,
                 Description = createAssessmentDto.Description,
                 Skills = createAssessmentDto.Skills,
