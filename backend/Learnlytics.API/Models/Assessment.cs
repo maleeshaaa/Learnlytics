@@ -33,12 +33,17 @@ namespace Learnlytics.API.Models
     [JsonDerivedType(typeof(CodingQuestion), "coding")]
     public abstract class QuestionBase
     {
-        [BsonRepresentation(BsonType.ObjectId)]
+        [BsonId, BsonRepresentation(BsonType.ObjectId)]
         public string? Id { get; set; }
 
         public QuestionType QuestionType { get; set; }
         public string Prompt { get; set; } = null!;
         public int Points { get; set; } = 1;
+
+        protected QuestionBase()
+        {
+            Id = ObjectId.GenerateNewId().ToString();
+        }
     }
 
     public class McqQuestion : QuestionBase
