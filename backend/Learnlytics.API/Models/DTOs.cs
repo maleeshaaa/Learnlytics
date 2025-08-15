@@ -1,4 +1,6 @@
-﻿namespace Learnlytics.API.Models
+﻿using System.Text.Json.Serialization;
+
+namespace Learnlytics.API.Models
 {
     public class UserDto
     {
@@ -39,9 +41,36 @@
         public string AssessmentId { get; set; } = null!;
     }
 
+    [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+    [JsonDerivedType(typeof(McqAnswerDto), "mcq")]
+    [JsonDerivedType(typeof(CodingAnswerDto), "coding")]
+    public abstract class AnswerDto
+    {
+        public string QuestionId { get; set; } = null!;
+        public QuestionType QuestionType { get; set; }
+    }
+
+    public class McqAnswerDto : AnswerDto
+    {
+        public List<int> SelectedOptions { get; set; } = new();
+        public McqAnswerDto()
+        {
+            QuestionType = QuestionType.MCQ;
+        }
+    }
+
+    public class CodingAnswerDto : AnswerDto
+    {
+        public string Code { get; set; } = string.Empty;
+        public CodingAnswerDto()
+        {
+            QuestionType = QuestionType.Coding;
+        }
+    }
+
     public class SubmitAttemptDto
     {
         public string AttemptId { get; set; } = null!;
-        public List<Answers> Answers { get; set; } = new();
+        public List<AnswerDto> Answers { get; set; } = new();
     }
 }

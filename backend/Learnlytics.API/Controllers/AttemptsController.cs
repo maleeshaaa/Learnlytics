@@ -37,9 +37,35 @@ namespace Learnlytics.API.Controllers
         [HttpPost("submit")]
         public async Task<IActionResult> Submit([FromBody] SubmitAttemptDto submitAttemptDto)
         {
-            await _service.SubmitAnswerAsync(submitAttemptDto.AttemptId, submitAttemptDto.Answers);
+            // Map DTOs to your domain Answer classes
+            var answers = submitAttemptDto.Answers.Select(a => a.QuestionType switch
+            {
+                QuestionType.MCQ => new McqAnswer
+                {
+                    QuestionId = a.QuestionId,
+                    SelectedOptions = ((McqAnswerDto)a).SelectedOptions
+                } as Answers,
+                QuestionType.Coding => new CodingAnswer
+                {
+                    QuestionId = a.QuestionId,
+                    Code = ((CodingAnswerDto)a).Code
+                } as Answers,
+                _ => throw new ArgumentException("Unknown question type")
+            }).ToList();
+
+            // Submit answers in the service
+            await _service.SubmitAnswerAsync(submitAttemptDto.AttemptId, answers);
+
+            // Get updated attempt
             var attempt = await _service.GetAttemptAsync(submitAttemptDto.AttemptId);
-            return Ok(new { attempt!.TotalScore, attempt.AutoScore, attempt.ManualScore, attempt.Status });
+
+            return Ok(new
+            {
+                attempt!.TotalScore,
+                attempt.AutoScore,
+                attempt.ManualScore,
+                attempt.Status
+            });
         }
     }
 }
