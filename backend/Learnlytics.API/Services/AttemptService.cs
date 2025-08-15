@@ -1,5 +1,6 @@
 ﻿using Learnlytics.API.Models;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Text.RegularExpressions;
 
@@ -8,15 +9,18 @@ namespace Learnlytics.API.Services
     public class AttemptService
     {
         private readonly IMongoCollection<Attempt> _attempts;
-        private readonly IMongoCollection<Assessment> _assessment;
+        private readonly IMongoCollection<Assessment> _assessments;
         private readonly IMongoCollection<PlagiarismReport> _plagiarism;
+        private readonly ILogger<AttemptService> _logger; // Add this field
 
-        public AttemptService(IOptions<MongoSettings> settings)
+        public AttemptService(IOptions<MongoSettings> settings, ILogger<AttemptService> logger) // Add logger parameter
         {
+            _logger = logger; // Assign logger
+
             var client = new MongoClient(settings.Value.ConnectionString);
             var database = client.GetDatabase(settings.Value.DatabaseName);
             _attempts = database.GetCollection<Attempt>("Attempts");
-            _assessment = database.GetCollection<Assessment>("Assessment");
+            _assessments = database.GetCollection<Assessment>("Assessments");
             _plagiarism = database.GetCollection<PlagiarismReport>("PlagiarismReport");
 
             _attempts.Indexes.CreateMany(new[]
@@ -30,19 +34,43 @@ namespace Learnlytics.API.Services
 
         public async Task<Attempt> StartAttemptAsync(string assessmentId, string username)
         {
-            var assessment = await _assessment.Find(a => a.Id == assessmentId && a.Published).FirstOrDefaultAsync() 
-                ?? throw new ArgumentException("Assessment not found or not published", nameof(assessmentId));
+            _logger.LogInformation("Attempting to start assessment. AssessmentId: {AssessmentId}, Username: {Username}",
+                                    assessmentId, username);
+
+            var assessment = await _assessments
+                .Find(a => a.Id == assessmentId && a.Published)
+                .FirstOrDefaultAsync();
+
+            if (assessment == null)
+            {
+                _logger.LogWarning("Assessment not found. AssessmentId: {AssessmentId}", assessmentId);
+                throw new ArgumentException("Assessment not found", nameof(assessmentId));
+            }
+
+            _logger.LogInformation("Assessment found. AssessmentId: {AssessmentId}, Published: {Published}",
+                                    assessment.AssessmentId, assessment.Published);
+
+            if (!assessment.Published)
+            {
+                _logger.LogWarning("Assessment is not published. AssessmentId: {AssessmentId}", assessmentId);
+                throw new ArgumentException("Assessment not published", nameof(assessmentId));
+            }
 
             var now = DateTime.UtcNow;
             var attempt = new Attempt
             {
-                AssessmentId = assessmentId,
+                AssessmentId = assessment.AssessmentId,
                 Username = username,
                 StartedAt = now,
                 ExpiredAt = now.AddMinutes(assessment.DurationMinutes),
                 Status = AttemptStatus.InProgress
             };
+
             await _attempts.InsertOneAsync(attempt);
+
+            _logger.LogInformation("Attempt started successfully. AttemptId: {AttemptId}, Username: {Username}",
+                                    attempt.Id, username);
+
             return attempt;
         }
 
@@ -65,7 +93,7 @@ namespace Learnlytics.API.Services
             attempt.Answers = answers;
 
             // Auto-score MCQs
-            var assessment = await _assessment.Find(a => a.Id == attempt.AssessmentId).FirstOrDefaultAsync()
+            var assessment = await _assessments.Find(a => a.Id == attempt.AssessmentId).FirstOrDefaultAsync()
                 ?? throw new InvalidOperationException("Assessment missing.");
 
             int autoScore = 0;
