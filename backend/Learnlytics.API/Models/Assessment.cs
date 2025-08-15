@@ -24,6 +24,7 @@ namespace Learnlytics.API.Models
         public List<QuestionBase> Questions { get; set; } = new();
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string CreatedBy { get; set; } = "";
+        public int NoOfLearners { get; set; } = 0;
     }
 
     [BsonDiscriminator(RootClass = true)]

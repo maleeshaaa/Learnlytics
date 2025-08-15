@@ -35,7 +35,8 @@ namespace Learnlytics.API.Controllers
                 Skills = createAssessmentDto.Skills,
                 DurationMinutes = createAssessmentDto.DurationMinutes,
                 Questions = createAssessmentDto.Questions,
-                CreatedBy = User.Identity?.Name ?? "System"
+                CreatedBy = User.Identity?.Name ?? "System",
+                NoOfLearners = 0,
             };
 
             await _service.CreateAssessmentAsync(a);

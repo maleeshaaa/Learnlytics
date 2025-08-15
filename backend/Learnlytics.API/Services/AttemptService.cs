@@ -71,6 +71,10 @@ namespace Learnlytics.API.Services
             _logger.LogInformation("Attempt started successfully. AttemptId: {AttemptId}, Username: {Username}",
                                     attempt.Id, username);
 
+            // Increment NoOfLearners
+            var update = Builders<Assessment>.Update.Inc(a => a.NoOfLearners, 1);
+            await _assessments.UpdateOneAsync(a => a.AssessmentId == assessment.AssessmentId, update);
+
             return attempt;
         }
 
@@ -93,7 +97,7 @@ namespace Learnlytics.API.Services
             attempt.Answers = answers;
 
             // Auto-score MCQs
-            var assessment = await _assessments.Find(a => a.Id == attempt.AssessmentId).FirstOrDefaultAsync()
+            var assessment = await _assessments.Find(a => a.AssessmentId == attempt.AssessmentId).FirstOrDefaultAsync()
                 ?? throw new InvalidOperationException("Assessment missing.");
 
             int autoScore = 0;
