@@ -85,44 +85,103 @@ namespace Learnlytics.API.Services
 
         public async Task SubmitAnswerAsync(string attemptId, List<Answers> answers)
         {
-            var attempt = await GetAttemptAsync(attemptId) ?? throw new InvalidOperationException("Attempt not found.");
+            // Get the attempt
+            var attempt = await GetAttemptAsync(attemptId)
+                          ?? throw new InvalidOperationException("Attempt not found.");
 
-            if (DateTime.UtcNow > attempt.ExpiredAt)
+            // Check if attempt is expired
+            if (attempt.ExpiredAt.HasValue && DateTime.UtcNow > attempt.ExpiredAt.Value)
             {
                 attempt.Status = AttemptStatus.Expired;
                 await _attempts.ReplaceOneAsync(x => x.Id == attempt.Id, attempt);
                 throw new InvalidOperationException("Time is over.");
             }
 
+            // Save submitted answers
             attempt.Answers = answers;
 
-            // Auto-score MCQs
-            var assessment = await _assessments.Find(a => a.AssessmentId == attempt.AssessmentId).FirstOrDefaultAsync()
-                ?? throw new InvalidOperationException("Assessment missing.");
+            // Fetch assessment
+            var assessment = await _assessments.Find(a => a.AssessmentId == attempt.AssessmentId)
+                                               .FirstOrDefaultAsync()
+                             ?? throw new InvalidOperationException("Assessment missing.");
 
             int autoScore = 0;
-            foreach(var q in assessment.Questions)
+            int manualScore = 0;
+            var feedbackList = new List<FeedbackItem>();
+
+            // Process each answer
+            foreach (var answer in answers)
             {
-                var ans = answers.FirstOrDefault(a => a.QuestionId == q.Id);
-                if (q is McqQuestion mcq && ans is McqAnswer mcqa)
+                switch (answer)
                 {
-                    bool isCorrect = mcqa.SelectedOptions.Count == mcq.CorrectAnswers.Count &&
-                                     !mcqa.SelectedOptions.Except(mcq.CorrectAnswers).Any();
-                    if (isCorrect) { 
-                        autoScore += mcq.Points;
-                        mcqa.IsCorrect = true;
-                    } else {
-                        mcqa.IsCorrect = false;
-                    }
+                    case McqAnswer mcqAnswer:
+                        var mcqQuestion = assessment.Questions.OfType<McqQuestion>()
+                                            .FirstOrDefault(q => q.Id == mcqAnswer.QuestionId);
+                        if (mcqQuestion != null)
+                        {
+                            mcqAnswer.IsCorrect = mcqAnswer.SelectedOptions.Count == mcqQuestion.CorrectAnswers.Count &&
+                                                  !mcqAnswer.SelectedOptions.Except(mcqQuestion.CorrectAnswers).Any();
+
+                            if (mcqAnswer.IsCorrect) autoScore += mcqQuestion.Points;
+
+                            feedbackList.Add(new FeedbackItem
+                            {
+                                QuestionId = mcqAnswer.QuestionId!,
+                                Feedback = mcqAnswer.IsCorrect ? "Correct" : "Incorrect"
+                            });
+                        }
+                        break;
+
+                    case CodingAnswer codingAnswer:
+                        var codingQuestion = assessment.Questions.OfType<CodingQuestion>()
+                                                .FirstOrDefault(q => q.Id == codingAnswer.QuestionId);
+                        if (codingQuestion != null && !string.IsNullOrWhiteSpace(codingAnswer.Code))
+                        {
+                            var aiResult = await GetAiFeedbackAsync(codingQuestion, codingAnswer);
+
+                            codingAnswer.IsCorrect = aiResult.IsCorrect;
+                            codingAnswer.PlagiarismScore = aiResult.PlagiarismScore; // optional
+                            // You can store structured AI feedback as needed
+                            // codingAnswer.AiFeedback = aiResult.Text;
+                            
+                            manualScore += aiResult.IsCorrect ? codingQuestion.Points : 0;
+
+                            feedbackList.Add(new FeedbackItem
+                            {
+                                QuestionId = codingAnswer.QuestionId!,
+                                Feedback = aiResult.Text
+                            });
+                        }
+                        break;
                 }
             }
 
             attempt.AutoScore = autoScore;
+            attempt.ManualScore = manualScore;
             attempt.Status = AttemptStatus.Submitted;
             attempt.SubmittedAt = DateTime.UtcNow;
+            attempt.FeedBacks = feedbackList
+                .Select(f => new FeedBackItem
+                {
+                    QuestionId = f.QuestionId,
+                    Feedback = f.Feedback
+                })
+                .ToList();
 
             await _attempts.ReplaceOneAsync(x => x.Id == attempt.Id, attempt);
-            await GeneratePlagiarismReportAsync(assessment, attempt);
+        }
+
+        /// <summary>
+        /// Placeholder AI feedback method. Replace with real Azure OpenAI integration.
+        /// </summary>
+        private Task<(bool IsCorrect, double PlagiarismScore, string Text)> GetAiFeedbackAsync(CodingQuestion question, CodingAnswer answer)
+        {
+            // Only return AI evaluation of this single coding answer
+            return Task.FromResult((
+                IsCorrect: true, // or false based on evaluation
+                PlagiarismScore: 0.0, // optional
+                Text: $"AI feedback: Your code for '{question.Prompt}' looks good."
+            ));
         }
 
         private async Task GeneratePlagiarismReportAsync(Assessment assessment, Attempt attempt)
