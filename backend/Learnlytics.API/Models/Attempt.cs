@@ -26,6 +26,8 @@ namespace Learnlytics.API.Models
         public int AutoScore { get; set; } = 0;
         public int ManualScore { get; set; } = 0;
         public int TotalScore => AutoScore + ManualScore;
+
+        public List<FeedBackItem> FeedBacks { get; set; } = new();
     }
 
     [BsonDiscriminator(RootClass = true)]
@@ -57,5 +59,11 @@ namespace Learnlytics.API.Models
         {
             QuestionType = QuestionType.Coding;
         }
+    }
+
+    public class FeedBackItem
+    {
+        public string? QuestionId { get; set; } = null!;
+        public string? Feedback { get; set; } = "";
     }
 }
