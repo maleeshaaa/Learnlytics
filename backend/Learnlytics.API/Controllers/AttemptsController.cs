@@ -37,31 +37,61 @@ namespace Learnlytics.API.Controllers
         [HttpPost("submit")]
         public async Task<IActionResult> Submit([FromBody] SubmitAttemptDto submitAttemptDto)
         {
-            // Map DTOs to your domain Answer classes
-            var answers = submitAttemptDto.Answers.Select(a => a.QuestionType switch
+            if (submitAttemptDto == null || submitAttemptDto.Answers == null || !submitAttemptDto.Answers.Any())
+                return BadRequest("No answers provided.");
+
+            var answers = new List<Answers>();
+
+            foreach (var a in submitAttemptDto.Answers)
             {
-                QuestionType.MCQ => new McqAnswer
+                switch (a.QuestionType)
                 {
-                    QuestionId = a.QuestionId,
-                    SelectedOptions = ((McqAnswerDto)a).SelectedOptions
-                } as Answers,
-                QuestionType.Coding => new CodingAnswer
-                {
-                    QuestionId = a.QuestionId,
-                    Code = ((CodingAnswerDto)a).Code
-                } as Answers,
-                _ => throw new ArgumentException("Unknown question type")
-            }).ToList();
+                    case QuestionType.MCQ:
+                        if (a is McqAnswerDto mcqDto)
+                        {
+                            answers.Add(new McqAnswer
+                            {
+                                QuestionId = mcqDto.QuestionId,
+                                SelectedOptions = mcqDto.SelectedOptions
+                            });
+                        }
+                        else
+                        {
+                            return BadRequest("Invalid MCQ answer format.");
+                        }
+                        break;
+
+                    case QuestionType.Coding:
+                        if (a is CodingAnswerDto codingDto)
+                        {
+                            answers.Add(new CodingAnswer
+                            {
+                                QuestionId = codingDto.QuestionId,
+                                Code = codingDto.Code
+                            });
+                        }
+                        else
+                        {
+                            return BadRequest("Invalid Coding answer format.");
+                        }
+                        break;
+
+                    default:
+                        return BadRequest("Unknown question type.");
+                }
+            }
 
             // Submit answers in the service
             await _service.SubmitAnswerAsync(submitAttemptDto.AttemptId, answers);
 
             // Get updated attempt
             var attempt = await _service.GetAttemptAsync(submitAttemptDto.AttemptId);
+            if (attempt == null)
+                return NotFound("Attempt not found.");
 
             return Ok(new
             {
-                attempt!.TotalScore,
+                attempt.TotalScore,
                 attempt.AutoScore,
                 attempt.ManualScore,
                 attempt.Status
